@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35122.118
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afiklmem.JobScheduler.BL", "Afiklmem.JobScheduler.BL\Afiklmem.JobScheduler.BL.csproj", "{904FE109-E5D1-436E-9284-00C04FFAD271}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Afimilk.JobScheduler.BL", "Afimilk.JobScheduler.BL\Afimilk.JobScheduler.BL.csproj", "{904FE109-E5D1-436E-9284-00C04FFAD271}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afiklmem.JobScheduler.API", "Afiklmem.JobScheduler.API\Afiklmem.JobScheduler.API.csproj", "{BD9D89AD-54FD-4A2F-B3AB-1E4C6881E04D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Afimilk.JobScheduler.API", "Afimilk.JobScheduler.API\Afimilk.JobScheduler.API.csproj", "{BD9D89AD-54FD-4A2F-B3AB-1E4C6881E04D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

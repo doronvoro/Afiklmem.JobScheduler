@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Afiklmem.JobScheduler.BL\Afiklmem.JobScheduler.BL.csproj" />
+    <ProjectReference Include="..\Afimilk.JobScheduler.BL\Afimilk.JobScheduler.BL.csproj" />
   </ItemGroup>
 
 </Project>

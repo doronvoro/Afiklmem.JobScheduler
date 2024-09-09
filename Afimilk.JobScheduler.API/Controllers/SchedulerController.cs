@@ -1,4 +1,4 @@
-﻿using Afiklmem.JobScheduler.BL;
+﻿using Afimilk.JobScheduler.BL;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -7,18 +7,42 @@ public class SchedulerController : ControllerBase
 {
     private readonly JobScheduler _jobScheduler;
     private readonly IJobRepository _jobRepository;
+    private readonly IJobHandlerFactory _jobHandlerFactory;
 
-    public SchedulerController(JobScheduler jobScheduler, IJobRepository jobRepository)
+    public SchedulerController(JobScheduler jobScheduler,
+                               IJobRepository jobRepository,
+                               IJobHandlerFactory jobHandlerFactory)
     {
         _jobScheduler = jobScheduler;
         _jobRepository = jobRepository;
+        _jobHandlerFactory = jobHandlerFactory;
     }
 
     // New: Add Job
     [HttpPost("add-job")]
-    public async Task<IActionResult> AddJob([FromBody] Job job)
+    public async Task<IActionResult> AddJob([FromBody] JobRequest jobRequest)
     {
+        // Check if model is valid based on data annotations (like Occurrences validation)
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (!_jobHandlerFactory.GetJobTypeNames().Contains(jobRequest.Type))
+        {
+            return BadRequest($"Job type {jobRequest.Type} does not exist.");
+        }
+
+        var job = new Job
+        {
+            DailyExecutionTime = jobRequest.DailyExecutionTime,
+            Occurrences = jobRequest.Occurrences,
+            RemainingOccurrences = jobRequest.Occurrences,
+            Type = jobRequest.Type,
+        };
+
         await _jobRepository.AddJobAsync(job);
+        
         return Ok("Job added successfully");
     }
 
@@ -61,5 +85,12 @@ public class SchedulerController : ControllerBase
     {
         var runningJobs = _jobScheduler.GetCurrentlyRunningJobs();
         return Ok(runningJobs);
+    }
+
+    [HttpGet("get-all-job-types")]
+    public IActionResult GetJobTypes()
+    {
+        var jobTypeNames = _jobHandlerFactory.GetJobTypeNames();
+        return Ok(jobTypeNames);
     }
 }

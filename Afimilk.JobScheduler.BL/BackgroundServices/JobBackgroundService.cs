@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Afiklmem.JobScheduler.BL
+namespace Afimilk.JobScheduler.BL
 {
     public class JobBackgroundService : BackgroundService
     {
@@ -17,7 +17,7 @@ namespace Afiklmem.JobScheduler.BL
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
             return Task.CompletedTask;
         }
 

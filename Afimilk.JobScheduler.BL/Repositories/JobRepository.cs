@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-namespace Afiklmem.JobScheduler.BL
+namespace Afimilk.JobScheduler.BL
 {
     public class JobRepository : IJobRepository
     {
         private readonly JobsDbContext _dbContext;
 
-        public JobRepository(JobsDbContext dbContext)
+        public JobRepository(JobsDbContext dbContext )
         {
             _dbContext = dbContext;
         }
@@ -42,17 +42,22 @@ namespace Afiklmem.JobScheduler.BL
             }
         }
 
-        public async Task<List<Job>> GetJobsToRunAsync(TimeSpan currentTime)
+        public async Task<List<Job>> GetJobsToRunAsync()
         {
-            var currentTimeToday = DateTime.Today.Add(currentTime);
-            //var a = await _dbContext.Jobs.ToListAsync();
-
-            return await _dbContext.Jobs
-                .Where(job =>
-                    job.RunAt  <= currentTime
-                    && job.RemainingOccurrences > 0)
+            // Fetch all jobs with remaining occurrences from the database
+            var allJobs = await _dbContext.Jobs
+                .Where(job => job.RemainingOccurrences > 0)
                 .ToListAsync();
-        }
 
+            // Get the current time of day
+            var currentTime = DateTime.Now.TimeOfDay;
+
+            // Filter jobs based on the execution time in memory
+            var jobsToRun = allJobs
+                .Where(job => job.DailyExecutionTime <= currentTime)
+                .ToList();
+
+            return jobsToRun;
+        }
     }
 }
