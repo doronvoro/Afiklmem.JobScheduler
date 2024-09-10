@@ -16,5 +16,4 @@ namespace Afimilk.JobScheduler.API
             }
         }
     }
-
 }

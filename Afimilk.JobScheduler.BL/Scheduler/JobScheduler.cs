@@ -26,7 +26,7 @@ namespace Afimilk.JobScheduler.BL
             var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
             var jobs = await jobRepository.GetJobsToRunAsync(_currentRunningJobs.Keys);
 
-            _logger.LogDebug("Fetched {JobCount} jobs to run. Current running jobs: {RunningJobCount}.", jobs.Count, _currentRunningJobs.Count);
+            _logger.LogDebug("Fetched {JobCount} jobs to run. Current running jobs: {@RunningJobCount}.", jobs.Count, _currentRunningJobs.Count);
 
             // Run jobs concurrently
             var tasks = jobs.Where(w => !_currentRunningJobs.Keys.Contains(w.Id))
@@ -55,14 +55,14 @@ namespace Afimilk.JobScheduler.BL
             var jobExecutionInfo = new JobExecutionInfo
             {
                 Job = job,
-                ThreadName = Thread.CurrentThread.Name ?? Thread.CurrentThread.ManagedThreadId.ToString(),
+                ThreadName = Thread.CurrentThread.ManagedThreadId.ToString(),// Thread.CurrentThread.Name ?? Thread.CurrentThread.ManagedThreadId.ToString(),
                 MainThread = Thread.CurrentThread.IsThreadPoolThread.ToString(),
             };
 
             _currentRunningJobs[job.Id] = jobExecutionInfo;
             job.ExecutionStarted = DateTime.Now;    
 
-            _logger.LogInformation("Starting job execution for Job ID {JobId}. Execution started at {StartTime}.", job.Id, job.ExecutionStarted);
+            _logger.LogInformation("Starting job execution for Job ID {JobId}. Execution started at {StartTime}. {@jobExecutionInfo}", job.Id, job.ExecutionStarted, jobExecutionInfo);
 
             try
             {
@@ -73,8 +73,11 @@ namespace Afimilk.JobScheduler.BL
                 job.RemainingOccurrences--;
                 await jobRepository.UpdateJobAsync(job);
 
-                _logger.LogInformation("Completed job execution for Job ID {JobId}. Execution completed at {EndTime}. Remaining occurrences: {RemainingOccurrences}.",
-                                        job.Id, job.ExecutionCompleted, job.RemainingOccurrences);
+                _logger.LogInformation("Completed job execution for Job ID {JobId}. Execution completed at {EndTime}. Remaining occurrences: {RemainingOccurrences}.  {jobExecutionInfo}",
+                                        job.Id, 
+                                        job.ExecutionCompleted, 
+                                        job.RemainingOccurrences,
+                                         jobExecutionInfo);
             }
             catch (Exception ex)
             {
