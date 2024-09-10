@@ -42,10 +42,11 @@ namespace Afimilk.JobScheduler.BL
             }
         }
 
-        public async Task<List<Job>> GetJobsToRunAsync()
+        public async Task<List<Job>> GetJobsToRunAsync(IEnumerable<int> notIncludeIds)
         {
             // Fetch all jobs with remaining occurrences from the database
             var allJobs = await _dbContext.Jobs
+                .WhereIf(notIncludeIds.Count() > 0, job => !notIncludeIds.Contains(job.Id))
                 .Where(job => job.RemainingOccurrences > 0)
                 .ToListAsync();
 

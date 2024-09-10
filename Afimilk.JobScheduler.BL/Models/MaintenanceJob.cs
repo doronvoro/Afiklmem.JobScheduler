@@ -4,16 +4,11 @@
     {
         public override async Task ExecuteAsync(Job job)
         {
+            Console.WriteLine("MaintenanceJob start...");
 
-           await Task.Delay(TimeSpan.FromSeconds(5));// Simulate report generation
+            await Task.Delay(TimeSpan.FromSeconds(30));// Simulate report generation
 
-            // Simulate backup
-            Console.WriteLine("Running daily backup...");
-            //  return Task.CompletedTask;
-
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            Console.WriteLine("MaintenanceJob end...");
         }
     }
-
-
 }

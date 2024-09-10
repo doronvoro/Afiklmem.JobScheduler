@@ -24,18 +24,27 @@ namespace Afimilk.JobScheduler.BL
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
-            var jobs = await jobRepository.GetJobsToRunAsync();
+            var jobs = await jobRepository.GetJobsToRunAsync(_currentRunningJobs.Keys);
 
-            if (jobs.Count > 0)
+            _logger.LogDebug("Fetched {JobCount} jobs to run. Current running jobs: {RunningJobCount}.", jobs.Count, _currentRunningJobs.Count);
+
+            // Run jobs concurrently
+            var tasks = jobs.Where(w => !_currentRunningJobs.Keys.Contains(w.Id))
+                            .Select(async job =>
             {
-
-            }
-
-            Parallel.ForEach(jobs, async job =>
-            {
-                await RunJobAsync(job);
-                // Task.Run(() => RunJobAsync(job, scope)); // Run jobs concurrently
+                try
+                {
+                    await RunJobAsync(job);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to execute job with ID {JobId}.", job.Id);
+                }
             });
+
+            _logger.LogDebug("tasks  count {TasksCount}", tasks.Count());
+
+           await Task.WhenAll(tasks);
         }
 
         private async Task RunJobAsync(Job job)
@@ -43,28 +52,39 @@ namespace Afimilk.JobScheduler.BL
             using var scope = _serviceScopeFactory.CreateScope();
             var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
 
-            _currentRunningJobs[job.Id] = new JobExecutionInfo
+            var jobExecutionInfo = new JobExecutionInfo
             {
-                Job = job, // Reference to the Job object
+                Job = job,
                 ThreadName = Thread.CurrentThread.Name ?? Thread.CurrentThread.ManagedThreadId.ToString(),
                 MainThread = Thread.CurrentThread.IsThreadPoolThread.ToString(),
             };
 
-            _logger.LogInformation($"Running {job.Type}...");
-            //todo:
-            job.ExecutionStarted = DateTime.Now;
+            _currentRunningJobs[job.Id] = jobExecutionInfo;
+            job.ExecutionStarted = DateTime.Now;    
 
-            await _jobHandlerFactory.GetHandler(job.Type)
-                                    .ExecuteAsync(job);
+            _logger.LogInformation("Starting job execution for Job ID {JobId}. Execution started at {StartTime}.", job.Id, job.ExecutionStarted);
 
-            job.ExecutionCompleted = DateTime.Now;
-            job.RemainingOccurrences--;
+            try
+            {
+                var jobHandler = _jobHandlerFactory.GetHandler(job.Type);
+                await jobHandler.ExecuteAsync(job);
 
-            await jobRepository.UpdateJobAsync(job);
+                job.ExecutionCompleted = DateTime.Now;
+                job.RemainingOccurrences--;
+                await jobRepository.UpdateJobAsync(job);
 
-            // Mark job as completed
-            // jobExecutionInfo.ExecutionCompleted = DateTime.Now;
-            _currentRunningJobs.TryRemove(job.Id, out _);
+                _logger.LogInformation("Completed job execution for Job ID {JobId}. Execution completed at {EndTime}. Remaining occurrences: {RemainingOccurrences}.",
+                                        job.Id, job.ExecutionCompleted, job.RemainingOccurrences);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while executing job with ID {JobId}.", job.Id);
+            }
+            finally
+            {
+                _currentRunningJobs.TryRemove(job.Id, out _);
+                _logger.LogDebug("Job ID {JobId} removed from running jobs. Current running jobs count: {RunningJobCount}.", job.Id, _currentRunningJobs.Count);
+            }
         }
 
         public IEnumerable<JobExecutionInfo> GetCurrentlyRunningJobs() => _currentRunningJobs.Values;

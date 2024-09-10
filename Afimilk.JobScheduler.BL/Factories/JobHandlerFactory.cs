@@ -8,7 +8,6 @@ namespace Afimilk.JobScheduler.BL
 
         public JobHandlerFactory()
         {
-
             var dictionary = new Dictionary<string, Func<JobHandler>>
              {
                  { nameof(ReportingJob), () => new ReportingJob() },
@@ -32,5 +31,4 @@ namespace Afimilk.JobScheduler.BL
 
         public IEnumerable<string> GetJobTypeNames() => _jobHandlerTypes.Keys;
     }
-
 }

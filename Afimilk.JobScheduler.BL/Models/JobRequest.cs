@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Afimilk.JobScheduler.BL;
+using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 public class JobRequest
 {
-    public string Type { get; set; }
+    [DefaultValue(nameof(ReportingJob))]
+    public required string Type { get; set; }
 
     public TimeSpan DailyExecutionTime { get; set; } // Use TimeSpan to store the time of day
 

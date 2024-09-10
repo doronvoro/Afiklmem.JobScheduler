@@ -7,7 +7,7 @@ namespace Afimilk.JobScheduler.BL
     {
         private readonly JobScheduler _jobScheduler;
         private readonly ILogger<JobBackgroundService> _logger;
-        private Timer _timer;
+        private Timer? _timer;
 
         public JobBackgroundService(JobScheduler jobScheduler, ILogger<JobBackgroundService> logger)
         {
@@ -17,12 +17,14 @@ namespace Afimilk.JobScheduler.BL
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+            _timer = new Timer(DoWork!, null, TimeSpan.Zero, TimeSpan.FromSeconds(10)); // todo: get from configuration 
+            _logger.LogDebug("Timer Createad XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
             return Task.CompletedTask;
         }
 
         private async void DoWork(object state)
         {
+            _logger.LogDebug("Timer execute ================================================================================");
             await _jobScheduler.ExecuteDueJobsAsync();
         }
 

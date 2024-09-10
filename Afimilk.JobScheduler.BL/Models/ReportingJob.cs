@@ -4,8 +4,11 @@
     {
         public override async Task ExecuteAsync(Job job)
         {
-            await Task.Delay(TimeSpan.FromSeconds(5));// Simulate report generation
-            Console.WriteLine("Generating daily report...");
+            Console.WriteLine("ReportingJob start...");
+
+            await Task.Delay(TimeSpan.FromSeconds(30));// Simulate report generation
+
+            Console.WriteLine("ReportingJob end...");
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿namespace Afimilk.JobScheduler.BL
+﻿
+namespace Afimilk.JobScheduler.BL
 {
     public interface IJobRepository
     {
@@ -7,6 +8,6 @@
         Task AddJobAsync(Job job);
         Task UpdateJobAsync(Job job);
         Task DeleteJobAsync(int id);
-        Task<List<Job>> GetJobsToRunAsync();
+        Task<List<Job>> GetJobsToRunAsync(IEnumerable<int> notIncludeIds);
     }
 }
