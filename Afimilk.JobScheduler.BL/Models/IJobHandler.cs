@@ -3,6 +3,6 @@
     public abstract class JobHandler
     {
         public abstract Task ExecuteAsync(Job job);
-        public virtual string GetJobName() => this.GetType().Name;
+        //public virtual string GetJobName() => this.GetType().Name;
     }
 }

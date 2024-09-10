@@ -26,7 +26,6 @@ namespace Afimilk.JobScheduler.BL
                 var logger = provider.GetRequiredService<ILogger<JobScheduler>>();
                 var jobHandlerFactory = provider.GetRequiredService<IJobHandlerFactory>();
 
-
                 return new JobScheduler(serviceScopeFactory, jobHandlerFactory, logger); // Pass the IServiceScopeFactory and ILogger to JobScheduler
             });
 

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Afimilk.JobScheduler.BL", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Afimilk.JobScheduler.API", "Afimilk.JobScheduler.API\Afimilk.JobScheduler.API.csproj", "{BD9D89AD-54FD-4A2F-B3AB-1E4C6881E04D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afimilk.JobScheduler.UnitTest", "Afimilk.JobScheduler.UnitTest\Afimilk.JobScheduler.UnitTest.csproj", "{7E36E94F-357E-4974-B31E-B8ACB9B2F11D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{BD9D89AD-54FD-4A2F-B3AB-1E4C6881E04D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD9D89AD-54FD-4A2F-B3AB-1E4C6881E04D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD9D89AD-54FD-4A2F-B3AB-1E4C6881E04D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E36E94F-357E-4974-B31E-B8ACB9B2F11D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E36E94F-357E-4974-B31E-B8ACB9B2F11D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E36E94F-357E-4974-B31E-B8ACB9B2F11D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E36E94F-357E-4974-B31E-B8ACB9B2F11D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
