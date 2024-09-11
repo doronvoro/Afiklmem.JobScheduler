@@ -9,8 +9,11 @@ namespace Afimilk.JobScheduler.UnitTests
         private IServiceProvider _serviceProvider;
         private IServiceScope _scope;
         private BL.JobScheduler _jobScheduler;
-        private Mock<IJobRepository> _jobRepositoryMock;
+        //private Mock<IJobRepository> _jobRepositoryMock;
         private Mock<IJobHandlerFactory> _jobHandlerFactoryMock;
+
+        private const int _defaultJobExecuteTime = 5 * 1000; //convert sec to milisecound
+        private const double _normalGapJobExecuteTime = 0.1; // precent
 
         public JobSchedulerTests()
         {
@@ -29,7 +32,7 @@ namespace Afimilk.JobScheduler.UnitTests
             var randomJobType = $"JobType_{Guid.NewGuid()}";
 
             // Define the delay time
-            var delayTime = TimeSpan.FromSeconds(2);
+            var delayTime = TimeSpan.FromMilliseconds(_defaultJobExecuteTime);
 
             // Mock the job handler to return a Task.Delay with the specified delay time
             var mockJobHandler = new Mock<JobHandler>();
@@ -53,11 +56,12 @@ namespace Afimilk.JobScheduler.UnitTests
 
             _scope = _serviceProvider.CreateScope();
             _jobScheduler = _scope.ServiceProvider.GetRequiredService<BL.JobScheduler>();
-            _jobRepositoryMock = new Mock<IJobRepository>();
+            //  _jobRepositoryMock = new Mock<IJobRepository>();
         }
 
         private void ReplaceJobHandlerFactory(ServiceCollection services, IJobHandlerFactory jobHandlerFactory)
         {
+            //
             // Remove the original registration of IJobHandlerFactory
             var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IJobHandlerFactory));
             if (descriptor != null)
@@ -74,41 +78,49 @@ namespace Afimilk.JobScheduler.UnitTests
         {
             // Arrange
             var randomJobType = _jobHandlerFactoryMock.Object.GetJobTypeNames().First();
-            var jobs = new List<Job>
-            {
-                new Job { Id = 1, Type = randomJobType, DailyExecutionTime = TimeSpan.Zero, Occurrences = 1, RemainingOccurrences = 1 },
-                new Job { Id = 2, Type = randomJobType, DailyExecutionTime = TimeSpan.Zero, Occurrences = 1, RemainingOccurrences = 1 },
-                new Job { Id = 3, Type = randomJobType, DailyExecutionTime = TimeSpan.Zero, Occurrences = 1, RemainingOccurrences = 1 }
-            };
 
-            _jobRepositoryMock.Setup(repo => repo.GetJobsToRunAsync(It.IsAny<IEnumerable<int>>()))
-                .ReturnsAsync(jobs);
+            var jobs = Enumerable.Range(0, 3).Select(s => new Job
+            {
+                Type = randomJobType,
+                DailyExecutionTime = TimeSpan.Zero,
+                Occurrences = 1,
+                RemainingOccurrences = 1
+            }
+            );
 
             var jobRepository = _scope.ServiceProvider.GetRequiredService<IJobRepository>();
-            foreach (var job in jobs)
-            {
-                await jobRepository.AddJobAsync(job);
-            }
 
-            var timeLimit = TimeSpan.FromSeconds(2);
+            var jobTasks = jobs.Select(async job => await jobRepository.AddJobAsync(job));
 
+            await Task.WhenAll(jobTasks);
+             
             // Act
             var startTime = DateTime.UtcNow;
-            await _jobScheduler.ExecuteDueJobsAsync();
+
+            var executeJobsTask = _jobScheduler.ExecuteDueJobsAsync();
+
+            var jobExecution = _jobScheduler.GetCurrentlyRunningJobs().ToList();
+
+            Assert.True(jobExecution.Count > 0, "No jobs are currently running.");
+
+            await executeJobsTask;
             var endTime = DateTime.UtcNow;
 
             // Assert
-            var jobExecutionInfos = _jobScheduler.GetCurrentlyRunningJobs().ToList();
-            Assert.True(jobExecutionInfos.Count > 0, "No jobs are currently running.");
+            var jobExecution1 = _jobScheduler.GetCurrentlyRunningJobs().ToList();
+            Assert.True(jobExecution1.Count == 0, "jobs are currently running.");
 
-            var startTimes = jobExecutionInfos.Select(info => info.Job.ExecutionStarted).Where(ts => ts != default);
-            var endTimes = jobExecutionInfos.Select(info => info.Job.ExecutionCompleted).Where(ts => ts != default);
+            var startTimes = jobExecution.Select(job => job.ExecutionStarted).Where(ts => ts != default);
+            var endTimes = jobExecution.Select(job => job.ExecutionCompleted).Where(ts => ts != default);
 
-            Assert.All(startTimes, startTime => Assert.True((startTime - startTime).TotalSeconds < timeLimit.TotalSeconds, "Job start times exceed the time limit."));
-            Assert.All(endTimes, endTime => Assert.True((endTime - endTime).TotalSeconds < timeLimit.TotalSeconds, "Job end times exceed the time limit."));
+            var timeLimitValue = _defaultJobExecuteTime * (1 + _normalGapJobExecuteTime);
+            var timeLimit = TimeSpan.FromMilliseconds(timeLimitValue);
 
-            var maxGap = jobExecutionInfos.Max(info => (info.Job.ExecutionCompleted - info.Job.ExecutionStarted).TotalSeconds);
-            Assert.True(maxGap <= timeLimit.TotalSeconds, $"Gap between job start and finish times exceeds the time limit: {maxGap} seconds.");
+            Assert.All(startTimes, t => Assert.True((startTime - t).TotalMilliseconds < timeLimit.TotalMilliseconds, "Job start times exceed the time limit."));
+            Assert.All(endTimes, t => Assert.True((endTime - t).TotalMilliseconds < timeLimit.TotalMilliseconds, "Job end times exceed the time limit."));
+
+            var maxGap = jobExecution.Max(job => (job.ExecutionCompleted - job.ExecutionStarted).TotalMilliseconds);
+            Assert.True(maxGap <= timeLimit.TotalMilliseconds, $"Gap between job start and finish times exceeds the time limit: {maxGap} seconds.");
         }
     }
 }

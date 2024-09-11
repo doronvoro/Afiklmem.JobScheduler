@@ -6,7 +6,7 @@ namespace Afimilk.JobScheduler.BL
 {
     public class JobScheduler
     {
-        private readonly ConcurrentDictionary<int, JobExecutionInfo> _currentRunningJobs = new();
+        private readonly ConcurrentDictionary<int, Job> _currentRunningJobs = new();
         private readonly ILogger<JobScheduler> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly IJobHandlerFactory _jobHandlerFactory;
@@ -42,9 +42,9 @@ namespace Afimilk.JobScheduler.BL
                 }
             });
 
-            _logger.LogDebug("tasks  count {TasksCount}", tasks.Count());
+            await Task.WhenAll(tasks);
 
-           await Task.WhenAll(tasks);
+            //_logger.LogDebug("executeed tasks count {TasksCount}", tasks.Count());
         }
 
         private async Task RunJobAsync(Job job)
@@ -52,17 +52,10 @@ namespace Afimilk.JobScheduler.BL
             using var scope = _serviceScopeFactory.CreateScope();
             var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
 
-            var jobExecutionInfo = new JobExecutionInfo
-            {
-                Job = job,
-                ThreadName = Thread.CurrentThread.ManagedThreadId.ToString(),// Thread.CurrentThread.Name ?? Thread.CurrentThread.ManagedThreadId.ToString(),
-                MainThread = Thread.CurrentThread.IsThreadPoolThread.ToString(),
-            };
-
-            _currentRunningJobs[job.Id] = jobExecutionInfo;
+            _currentRunningJobs[job.Id] = job;
             job.ExecutionStarted = DateTime.Now;    
 
-            _logger.LogInformation("Starting job execution for Job ID {JobId}. Execution started at {StartTime}. {@jobExecutionInfo}", job.Id, job.ExecutionStarted, jobExecutionInfo);
+            _logger.LogInformation("Starting job execution for Job ID {JobId}. Execution started at {StartTime}. ThreadId:{ThreadId}", job.Id, job.ExecutionStarted, Thread.CurrentThread.ManagedThreadId);
 
             try
             {
@@ -73,11 +66,11 @@ namespace Afimilk.JobScheduler.BL
                 job.RemainingOccurrences--;
                 await jobRepository.UpdateJobAsync(job);
 
-                _logger.LogInformation("Completed job execution for Job ID {JobId}. Execution completed at {EndTime}. Remaining occurrences: {RemainingOccurrences}.  {jobExecutionInfo}",
+                _logger.LogInformation("Completed job execution for Job ID {JobId}. Execution completed at {EndTime}. Remaining occurrences: {RemainingOccurrences}. ThreadId:{ThreadId}",
                                         job.Id, 
                                         job.ExecutionCompleted, 
                                         job.RemainingOccurrences,
-                                         jobExecutionInfo);
+                                        Thread.CurrentThread.ManagedThreadId);
             }
             catch (Exception ex)
             {
@@ -90,6 +83,6 @@ namespace Afimilk.JobScheduler.BL
             }
         }
 
-        public IEnumerable<JobExecutionInfo> GetCurrentlyRunningJobs() => _currentRunningJobs.Values;
+        public IEnumerable<Job> GetCurrentlyRunningJobs() => _currentRunningJobs.Values;
     }
 }
