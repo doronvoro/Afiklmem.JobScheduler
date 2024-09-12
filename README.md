@@ -1,10 +1,10 @@
 # 
 
-**Afikmlem Job Scheduler**
+**Afimilk Job Scheduler**
 
 **Overview**
 
-The **Afikmlem Job Scheduler** is a flexible and persistent job scheduling system designed to manage and execute jobs based on user-defined schedules. It supports tasks like daily report generation and system backups, with options for persistence across system restarts and occurrence limiting.
+The **Afimilk Job Scheduler** is a flexible and persistent job scheduling system designed to manage and execute jobs based on user-defined schedules. It supports tasks like daily report generation and system backups, with options for persistence across system restarts and occurrence limiting.
 
 **Features**
 
