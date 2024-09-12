@@ -41,8 +41,8 @@ Ensure that you have installed the following:
 
 ```bash
 
-git clone https://github.com/doronvoro/Afiklmem.JobScheduler.git
-cd Afiklmem.JobScheduler
+git clone https://github.com/doronvoro/Afimilk.JobScheduler.git
+cd Afimilk.JobScheduler   
  ```
  
 2.  **Install Dependencies**:  
