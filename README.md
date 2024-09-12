@@ -35,46 +35,41 @@ Ensure that you have installed the following:
 
 1.  **Clone the Repository**:
 
- ```bash
- 
+```bash
+
 git clone https://github.com/doronvoro/Afiklmem.JobScheduler.git
-
 cd Afiklmem.JobScheduler
-
+ ```
+ 
 2.  **Install Dependencies**:  
     Navigate to the solution folder and restore the project dependencies:
 
- ```bash
-
+```bash
 dotnet restore
-
+ ```
+ 
 3.  **Run the Application**:  
     To start the application:
 
-bash
-
-Copy code
-
+```bash
 dotnet run --project Afimilk.JobScheduler.API
-
+ ```
 4.  **Run the Unit Tests**:  
     Ensure that all tests pass by running the following command:
 
-bash
-
-Copy code
-
+```bash
 dotnet test
-
+ ```
+ 
 **Usage**
 
 **Registering a Job**
 
 You can register a job to run at a specific time. For example, to schedule a maintenance backup every day at 01:00 AM:
 
-csharp
 
-Copy code
+
+
 
 var jobRequest = new JobRequest
 
@@ -94,9 +89,9 @@ await \_schedulerController.AddJob(jobRequest);
 
 Retrieve a list of all registered jobs:
 
-csharp
 
-Copy code
+
+
 
 var jobs = await \_schedulerController.GetJobs();
 
@@ -104,9 +99,9 @@ var jobs = await \_schedulerController.GetJobs();
 
 Remove a job by its ID:
 
-csharp
 
-Copy code
+
+
 
 await \_schedulerController.DeleteJob(jobId);
 
@@ -135,11 +130,9 @@ The solution includes a comprehensive set of unit tests for core functionality. 
 
 Run the tests using:
 
-bash
-
-Copy code
-
+```bash
 dotnet test
+```
 
 **Future Enhancements**
 
