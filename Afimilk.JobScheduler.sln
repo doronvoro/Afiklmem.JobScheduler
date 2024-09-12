@@ -7,7 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Afimilk.JobScheduler.BL", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Afimilk.JobScheduler.API", "Afimilk.JobScheduler.API\Afimilk.JobScheduler.API.csproj", "{BD9D89AD-54FD-4A2F-B3AB-1E4C6881E04D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Afimilk.JobScheduler.UnitTest", "Afimilk.JobScheduler.UnitTest\Afimilk.JobScheduler.UnitTest.csproj", "{7E36E94F-357E-4974-B31E-B8ACB9B2F11D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Afimilk.JobScheduler.UnitTest", "Afimilk.JobScheduler.UnitTest\Afimilk.JobScheduler.UnitTest.csproj", "{7E36E94F-357E-4974-B31E-B8ACB9B2F11D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EAA958D1-6BAA-4A3C-A9BE-53C403146A99}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
