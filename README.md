@@ -35,7 +35,7 @@ Ensure that you have installed the following:
 
 1.  **Clone the Repository**:
 
-bash
+ ```bash
 
 Copy code
 
