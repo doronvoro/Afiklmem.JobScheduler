@@ -99,6 +99,4 @@ namespace Afimilk.JobScheduler.Tests
             Assert.Equal("Job not found", notFoundResult.Value);
         }
     }
-
-
 }

@@ -133,6 +133,6 @@ dotnet test
 - **Split the Afimilk.JobScheduler.BL Project**: Separate the `Afimilk.JobScheduler.BL` project into multiple smaller projects based on different responsibilities (e.g., Entity Framework, job scheduling logic, etc.) to improve maintainability, scalability, and separation of concerns.
 - **Consider Using Hangfire or Quartz for Production**: Evaluate using established job scheduling libraries such as Hangfire or Quartz in a production environment for more advanced features, scalability, and better handling of background job execution.
 - **Support `CancellationToken`**: Implement `CancellationToken` support in job scheduling and execution to allow graceful job cancellation and better control over task execution, especially for long-running or critical operations.
-
+- **Validation for `DailyExecutionTime`**: Add validation to ensure that the `DailyExecutionTime` is within a valid range (e.g., preventing invalid times like `25:00`) to improve data integrity and avoid scheduling errors.
 - **License**
 This project is licensed under the MIT License - see the LICENSE file for details.

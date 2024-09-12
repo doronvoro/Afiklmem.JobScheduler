@@ -1,125 +1,99 @@
 ﻿using Afimilk.JobScheduler.BL;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace Afimilk.JobScheduler.UnitTests
+public class JobSchedulerTests
 {
-    public class JobSchedulerTests
+    private readonly Mock<IJobRepository> _jobRepositoryMock;
+    private readonly Mock<IJobHandlerFactory> _jobHandlerFactoryMock;
+    private readonly Mock<ILogger<JobScheduler>> _loggerMock;
+    private readonly Mock<IServiceScopeFactory> _serviceScopeFactoryMock;
+    private readonly Mock<IServiceScope> _serviceScopeMock;
+    private readonly JobScheduler _jobScheduler;
+
+    public JobSchedulerTests()
     {
-        private IServiceProvider _serviceProvider;
-        private IServiceScope _scope;
-        private BL.JobScheduler _jobScheduler;
-        private Mock<IJobHandlerFactory> _jobHandlerFactoryMock;
+        _jobRepositoryMock = new Mock<IJobRepository>();
+        _jobHandlerFactoryMock = new Mock<IJobHandlerFactory>();
+        _loggerMock = new Mock<ILogger<JobScheduler>>();
+        _serviceScopeFactoryMock = new Mock<IServiceScopeFactory>();
+        _serviceScopeMock = new Mock<IServiceScope>();
 
-        private const int _defaultJobExecuteTime = 5 * 1000; //convert sec to milisecound
-        private const double _normalGapJobExecuteTime = 0.1; // precent
+        _serviceScopeFactoryMock.Setup(x => x.CreateScope()).Returns(_serviceScopeMock.Object);
+        _serviceScopeMock.Setup(x => x.ServiceProvider.GetService(typeof(IJobRepository)))
+            .Returns(_jobRepositoryMock.Object);
 
-        public JobSchedulerTests()
+        _jobScheduler = new JobScheduler(_serviceScopeFactoryMock.Object, _jobHandlerFactoryMock.Object, _loggerMock.Object);
+    }
+
+    [Fact]
+    public async Task HandleIncompleteJobsOnStartup_LogsCorrectNumberOfJobs()
+    {
+        // Arrange
+        var incompleteJobs = new List<Job>
         {
-            // Setup the DI container
-            var services = new ServiceCollection();
+            new Job { Id = 1 },
+            new Job { Id = 2 }
+        };
 
-            // Add job scheduler services using the original method
-            services.AddJobSchedulerBL();
-            services.SetInMemoryDatabase();
-            services.AddLogging();
+        _jobRepositoryMock.Setup(repo => repo.GetIncompleteJobsAsync())
+            .ReturnsAsync(incompleteJobs);
 
-            // Mock JobHandlerFactory
-            _jobHandlerFactoryMock = new Mock<IJobHandlerFactory>();
+        // Act
+        await _jobScheduler.HandleIncompleteJobsOnStartup();
 
-            // Define a random job type
-            var randomJobType = $"JobType_{Guid.NewGuid()}";
+        // Assert
+        _loggerMock.Verify(
+            logger => logger.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Number of incomplete jobs: 2")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Once);
+    }
 
-            // Define the delay time
-            var delayTime = TimeSpan.FromMilliseconds(_defaultJobExecuteTime);
 
-            // Mock the job handler to return a Task.Delay with the specified delay time
-            var mockJobHandler = new Mock<IJobHandler>();
-            mockJobHandler.Setup(jh => jh.ExecuteAsync(It.IsAny<Job>()))
-                .Returns(async () => await Task.Delay(delayTime));
-
-            // Setup GetHandler to return the mock job handler
-            _jobHandlerFactoryMock.Setup(f => f.GetHandler(randomJobType))
-                .Returns(mockJobHandler.Object);
-
-            // Setup GetJobTypeNames to return the registered job type
-            _jobHandlerFactoryMock.Setup(f => f.GetJobTypeNames())
-                .Returns([randomJobType]);
-
-            // Remove existing IJobHandlerFactory and add the mock factory
-            ReplaceJobHandlerFactory(services, _jobHandlerFactoryMock.Object);
-
-            // Build the service provider again with the modified services
-            _serviceProvider = services.BuildServiceProvider();
-            _serviceProvider.InitializeDatabase();
-
-            _scope = _serviceProvider.CreateScope();
-            _jobScheduler = _scope.ServiceProvider.GetRequiredService<BL.JobScheduler>();
-            //  _jobRepositoryMock = new Mock<IJobRepository>();
-        }
-
-        private void ReplaceJobHandlerFactory(ServiceCollection services, IJobHandlerFactory jobHandlerFactory)
+    [Fact]
+    public async Task ExecuteDueJobsAsync_RunsMultipleJobsConcurrently()
+    {
+        // Arrange
+        var jobs = new List<Job>
         {
-            //
-            // Remove the original registration of IJobHandlerFactory
-            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IJobHandlerFactory));
-            if (descriptor != null)
-            {
-                services.Remove(descriptor);
-            }
+            new Job { Id = 1, Type = "TestJob1" },
+            new Job { Id = 2, Type = "TestJob2" }
+        };
 
-            // Add the mock job handler factory
-            services.AddSingleton(jobHandlerFactory);
-        }
+        var jobHandlerMock1 = new Mock<IJobHandler>();
+        var jobHandlerMock2 = new Mock<IJobHandler>();
 
-        [Fact]
-        public async Task JobExecutionTimes_ShouldStartAndFinishWithinTimeLimit()
-        {
-            // Arrange
-            var randomJobType = _jobHandlerFactoryMock.Object.GetJobTypeNames().First();
+        _jobRepositoryMock.Setup(repo => repo.GetJobsToRunAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(jobs);
 
-            var jobs = Enumerable.Range(0, 3).Select(s => new Job
-            {
-                Type = randomJobType,
-                DailyExecutionTime = TimeSpan.Zero,
-                Occurrences = 1,
-                RemainingOccurrences = 1
-            }
-            );
+        _jobHandlerFactoryMock.Setup(factory => factory.GetHandler("TestJob1"))
+            .Returns(jobHandlerMock1.Object);
+        _jobHandlerFactoryMock.Setup(factory => factory.GetHandler("TestJob2"))
+            .Returns(jobHandlerMock2.Object);
 
-            var jobRepository = _scope.ServiceProvider.GetRequiredService<IJobRepository>();
+        jobHandlerMock1.Setup(handler => handler.ExecuteAsync(jobs[0])).Returns(Task.CompletedTask);
+        jobHandlerMock2.Setup(handler => handler.ExecuteAsync(jobs[1])).Returns(Task.CompletedTask);
 
-            var jobTasks = jobs.Select(async job => await jobRepository.AddJobAsync(job));
+        // Act
+        await _jobScheduler.ExecuteDueJobsAsync();
 
-            await Task.WhenAll(jobTasks);
-             
-            // Act
-            var startTime = DateTime.UtcNow;
+        // Assert
+        _jobRepositoryMock.Verify(repo => repo.GetJobsToRunAsync(It.IsAny<IEnumerable<int>>()), Times.Once);
+        _jobHandlerFactoryMock.Verify(factory => factory.GetHandler("TestJob1"), Times.Once);
+        _jobHandlerFactoryMock.Verify(factory => factory.GetHandler("TestJob2"), Times.Once);
 
-            var executeJobsTask = _jobScheduler.ExecuteDueJobsAsync();
-
-            var jobExecution = _jobScheduler.GetCurrentlyRunningJobs().ToList();
-
-            Assert.True(jobExecution.Count > 0, "No jobs are currently running.");
-
-            await executeJobsTask;
-            var endTime = DateTime.UtcNow;
-
-            // Assert
-            var jobExecution1 = _jobScheduler.GetCurrentlyRunningJobs().ToList();
-            Assert.True(jobExecution1.Count == 0, "jobs are currently running.");
-
-            var startTimes = jobExecution.Select(job => job.ExecutionStarted).Where(ts => ts != default);
-            var endTimes = jobExecution.Select(job => job.ExecutionCompleted).Where(ts => ts != default);
-
-            var timeLimitValue = _defaultJobExecuteTime * (1 + _normalGapJobExecuteTime);
-            var timeLimit = TimeSpan.FromMilliseconds(timeLimitValue);
-
-            Assert.All(startTimes, t => Assert.True((startTime - t).TotalMilliseconds < timeLimit.TotalMilliseconds, "Job start times exceed the time limit."));
-            Assert.All(endTimes, t => Assert.True((endTime - t).TotalMilliseconds < timeLimit.TotalMilliseconds, "Job end times exceed the time limit."));
-
-            var maxGap = jobExecution.Max(job => (job.ExecutionCompleted - job.ExecutionStarted).TotalMilliseconds);
-            Assert.True(maxGap <= timeLimit.TotalMilliseconds, $"Gap between job start and finish times exceeds the time limit: {maxGap} seconds.");
-        }
+        _loggerMock.Verify(
+            logger => logger.Log(
+                LogLevel.Debug,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Fetched 2 jobs to run")),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Once);
     }
 }

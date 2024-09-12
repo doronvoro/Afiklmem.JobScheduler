@@ -1,5 +1,9 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Reflection.Emit;
+using System.Runtime.Intrinsics.X86;
+using System;
 
 namespace Afimilk.JobScheduler.BL
 {
@@ -17,10 +21,9 @@ namespace Afimilk.JobScheduler.BL
 
         protected async override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            // Make sure that multiple instances of the scheduler don’t pick up the same job for execution.You can use locks or database - level mechanisms to avoid race conditions. 
             _logger.LogDebug("Handle Incomplete Jobs On Startup ==================");
-
             await _jobScheduler.HandleIncompleteJobsOnStartup();
-
             _logger.LogDebug("Timer Created ==================");
             _timer = new Timer(DoWork!, null, TimeSpan.Zero, TimeSpan.FromSeconds(10)); // todo: get from configuration 
         }
