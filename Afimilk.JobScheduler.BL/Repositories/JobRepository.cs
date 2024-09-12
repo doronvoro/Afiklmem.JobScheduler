@@ -55,5 +55,12 @@ namespace Afimilk.JobScheduler.BL
                 .Where(job => job.RemainingOccurrences > 0 && job.DailyExecutionTime <= currentTime)
                 .ToListAsync();
         }
+
+        public async Task<List<Job>> GetIncompleteJobsAsync()
+        {
+            return await _dbContext.Jobs
+                .Where(job => job.ExecutionStarted != null && job.ExecutionCompleted == null)
+                .ToListAsync();
+        }
     }
 }

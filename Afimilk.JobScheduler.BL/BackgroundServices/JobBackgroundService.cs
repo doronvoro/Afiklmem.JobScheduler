@@ -15,16 +15,19 @@ namespace Afimilk.JobScheduler.BL
             _logger = logger;
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected async override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogDebug("Handle Incomplete Jobs On Startup ==================");
+
+            await _jobScheduler.HandleIncompleteJobsOnStartup();
+
+            _logger.LogDebug("Timer Created ==================");
             _timer = new Timer(DoWork!, null, TimeSpan.Zero, TimeSpan.FromSeconds(10)); // todo: get from configuration 
-            _logger.LogDebug("Timer Createad ==================");
-            return Task.CompletedTask;
         }
 
         private async void DoWork(object state)
         {
-            _logger.LogDebug("Timer execute ==================");
+            _logger.LogDebug("Timer Execute ==================");
             await _jobScheduler.ExecuteDueJobsAsync();
         }
 

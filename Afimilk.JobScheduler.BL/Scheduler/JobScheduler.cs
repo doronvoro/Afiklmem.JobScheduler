@@ -47,6 +47,22 @@ namespace Afimilk.JobScheduler.BL
             await Task.WhenAll(tasks);
         }
 
+        public async Task HandleIncompleteJobsOnStartup()
+        {
+            using var scope = _serviceScopeFactory.CreateScope();
+            var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
+
+            var incompleteJobs = await jobRepository.GetIncompleteJobsAsync(); // Jobs where ExecutionCompleted is null
+
+            _logger.LogInformation("Number of incomplete jobs: {Count}", incompleteJobs.Count);
+
+            foreach (var job in incompleteJobs)
+            {
+                _logger.LogInformation("Running incomplete job: {JobId} - {JobName}", job.Id, job.Type);
+                await RunJobAsync(job);
+            }
+        }
+
         private async Task RunJobAsync(Job job)
         {
             using var scope = _serviceScopeFactory.CreateScope();
@@ -59,6 +75,7 @@ namespace Afimilk.JobScheduler.BL
             }
 
             job.ExecutionStarted = DateTime.Now;
+            await jobRepository.UpdateJobAsync(job);
 
             _logger.LogInformation("Starting job execution for Job ID {JobId} ({JobType}).", job.Id, job.Type);
 
@@ -71,11 +88,11 @@ namespace Afimilk.JobScheduler.BL
                 job.RemainingOccurrences--;
                 await jobRepository.UpdateJobAsync(job);
 
-                _logger.LogInformation("Completed job execution for Job ID {JobId}. Execution completed at {EndTime}. Remaining occurrences: {RemainingOccurrences}. ThreadId:{ThreadId}",
-                                        job.Id, 
-                                        job.ExecutionCompleted, 
-                                        job.RemainingOccurrences,
-                                        Thread.CurrentThread.ManagedThreadId);
+                _logger.LogInformation("Completed job execution for Job ID {JobId}. Execution completed at {EndTime}. Remaining occurrences: {RemainingOccurrences}.",
+                                        job.Id,
+                                        job.ExecutionCompleted,
+                                        job.RemainingOccurrences);
+
             }
             catch (Exception ex)
             {

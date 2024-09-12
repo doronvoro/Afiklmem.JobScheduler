@@ -9,5 +9,6 @@ namespace Afimilk.JobScheduler.BL
         Task UpdateJobAsync(Job job);
         Task<bool> DeleteJobAsync(int id);
         Task<List<Job>> GetJobsToRunAsync(IEnumerable<int> notIncludeIds);
+        Task<List<Job>> GetIncompleteJobsAsync();
     }
 }

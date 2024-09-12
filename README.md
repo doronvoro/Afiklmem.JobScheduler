@@ -8,13 +8,17 @@ The **Afikmlem Job Scheduler** is a flexible and persistent job scheduling syste
 
 **Features**
 
+-  **Web API with Swagger**: Provides a user-friendly Web API interface using Swagger to easily add jobs with default values, making job management more accessible.
+-  **View Running Jobs**: Allows users to see currently running jobs via the API, giving visibility into active job execution.
+-  **Concurrent Execution**: Run multiple jobs concurrently, ensuring system efficiency.
+-  **Persistence**: All registered jobs are persisted and survive system restarts.
+-  **Job Types**: Supports different types of jobs (e.g., Reporting, Maintenance).
+
 -   **Add Job**: Schedule new jobs with specific execution times.
 -   **Delete Job**: Remove jobs by their unique ID.
 -   **Retrieve Jobs**: View all registered jobs or query specific jobs by their ID.
--   **Concurrent Execution**: Run multiple jobs concurrently, ensuring system efficiency.
--   **Persistence**: All registered jobs are persisted and survive system restarts.
+
 -   **Occurrence Limiting**: Jobs can be set to run a limited number of times.
--   **Job Types**: Supports different types of jobs (e.g., Reporting, Maintenance).
 -   **Logging**: Provides detailed logs for tracking job execution and errors.
 
 **Requirements**
@@ -52,7 +56,7 @@ dotnet restore
     To start the application:
 
 ```bash
-dotnet run --project Afimilk.JobScheduler.API
+dotnet watch run --project Afimilk.JobScheduler.API
  ```
 4.  **Run the Unit Tests**:  
     Ensure that all tests pass by running the following command:
@@ -67,20 +71,13 @@ dotnet test
 
 You can register a job to run at a specific time. For example, to schedule a maintenance backup every day at 01:00 AM:
 
-
-
-
-
 var jobRequest = new JobRequest
-
 {
-
     DailyExecutionTime = TimeSpan.FromHours(1),
 
     Occurrences = 5, // Run 5 times
 
     Type = "MaintenanceJob"
-
 };
 
 await \_schedulerController.AddJob(jobRequest);
@@ -89,19 +86,11 @@ await \_schedulerController.AddJob(jobRequest);
 
 Retrieve a list of all registered jobs:
 
-
-
-
-
 var jobs = await \_schedulerController.GetJobs();
 
 **Deleting a Job**
 
 Remove a job by its ID:
-
-
-
-
 
 await \_schedulerController.DeleteJob(jobId);
 
@@ -134,12 +123,16 @@ Run the tests using:
 dotnet test
 ```
 
-**Future Enhancements**
+## Future Enhancements
 
--   **Job Retry Mechanism**: Add retry logic for failed jobs.
--   **Advanced Scheduling**: Add support for more complex schedules (e.g., weekly or monthly jobs).
--   **Improved Error Handling**: Implement more robust error handling for job execution.
+- **Job Retry Mechanism**: Add retry logic for failed jobs.
+- **Advanced Scheduling**: Add support for more complex schedules (e.g., weekly or monthly jobs).
+- **Improved Error Handling**: Implement more robust error handling for job execution.
+- **Limit Concurrent Tasks**: Replace `Task.WhenAll` with `System.Threading.Tasks.Dataflow` to control the limit of concurrent tasks and prevent machine resource exhaustion. This will help in handling large numbers of tasks efficiently and avoid performance issues.
+- **Switch to a More Robust Database**: Replace SQLite with a more robust production database like Microsoft SQL Server (MSSQL) or Redis for better performance, scalability, and support for distributed architectures.
+- **Split the Afimilk.JobScheduler.BL Project**: Separate the `Afimilk.JobScheduler.BL` project into multiple smaller projects based on different responsibilities (e.g., Entity Framework, job scheduling logic, etc.) to improve maintainability, scalability, and separation of concerns.
+- **Consider Using Hangfire or Quartz for Production**: Evaluate using established job scheduling libraries such as Hangfire or Quartz in a production environment for more advanced features, scalability, and better handling of background job execution.
+- **Support `CancellationToken`**: Implement `CancellationToken` support in job scheduling and execution to allow graceful job cancellation and better control over task execution, especially for long-running or critical operations.
 
-**License**
-
+- **License**
 This project is licensed under the MIT License - see the LICENSE file for details.
