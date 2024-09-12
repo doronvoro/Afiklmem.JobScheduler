@@ -40,11 +40,11 @@ namespace Afimilk.JobScheduler.BL
                 {
                     _logger.LogError(ex, "Failed to execute job with ID {JobId}.", job.Id);
                 }
-            });
+            }).ToArray();
+
+            _logger.LogDebug("executeed tasks count {TasksCount}", tasks.Length);
 
             await Task.WhenAll(tasks);
-
-            //_logger.LogDebug("executeed tasks count {TasksCount}", tasks.Count());
         }
 
         private async Task RunJobAsync(Job job)
@@ -52,10 +52,15 @@ namespace Afimilk.JobScheduler.BL
             using var scope = _serviceScopeFactory.CreateScope();
             var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
 
-            _currentRunningJobs[job.Id] = job;
-            job.ExecutionStarted = DateTime.Now;    
+            if (!_currentRunningJobs.TryAdd(job.Id, job))
+            {
+                _logger.LogWarning("Job ID {JobId} is already running.", job.Id);
+                return;
+            }
 
-            _logger.LogInformation("Starting job execution for Job ID {JobId}. Execution started at {StartTime}. ThreadId:{ThreadId}", job.Id, job.ExecutionStarted, Thread.CurrentThread.ManagedThreadId);
+            job.ExecutionStarted = DateTime.Now;
+
+            _logger.LogInformation("Starting job execution for Job ID {JobId} ({JobType}).", job.Id, job.Type);
 
             try
             {
@@ -78,7 +83,10 @@ namespace Afimilk.JobScheduler.BL
             }
             finally
             {
-                _currentRunningJobs.TryRemove(job.Id, out _);
+                if (_currentRunningJobs.ContainsKey(job.Id))
+                {
+                    _currentRunningJobs.TryRemove(job.Id, out _);
+                }
                 _logger.LogDebug("Job ID {JobId} removed from running jobs. Current running jobs count: {RunningJobCount}.", job.Id, _currentRunningJobs.Count);
             }
         }

@@ -4,10 +4,12 @@ namespace Afimilk.JobScheduler.BL
     public class JobRepository : IJobRepository
     {
         private readonly JobsDbContext _dbContext;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
-        public JobRepository(JobsDbContext dbContext )
+        public JobRepository(JobsDbContext dbContext, IDateTimeProvider dateTimeProvider)
         {
             _dbContext = dbContext;
+            _dateTimeProvider = dateTimeProvider;
         }
 
         public async Task<List<Job>> GetAllJobsAsync()
@@ -31,34 +33,27 @@ namespace Afimilk.JobScheduler.BL
             _dbContext.Jobs.Update(job);
             await _dbContext.SaveChangesAsync();
         }
-
-        public async Task DeleteJobAsync(int id)
+        
+        public async Task<bool> DeleteJobAsync(int id)
         {
             var job = await _dbContext.Jobs.FindAsync(id);
-            if (job != null)
+            if (job == null)
             {
-                _dbContext.Jobs.Remove(job);
-                await _dbContext.SaveChangesAsync();
+                return false; // Or throw exception
             }
+            _dbContext.Jobs.Remove(job);
+            await _dbContext.SaveChangesAsync();
+            return true;
         }
 
         public async Task<List<Job>> GetJobsToRunAsync(IEnumerable<int> notIncludeIds)
         {
-            // Fetch all jobs with remaining occurrences from the database
-            var allJobs = await _dbContext.Jobs
-                .WhereIf(notIncludeIds.Count() > 0, job => !notIncludeIds.Contains(job.Id))
-                .Where(job => job.RemainingOccurrences > 0)
+            var currentTime = _dateTimeProvider.GetCurrentTime();
+
+            return await _dbContext.Jobs
+                .WhereIf(notIncludeIds.Any(), job => !notIncludeIds.Contains(job.Id))
+                .Where(job => job.RemainingOccurrences > 0 && job.DailyExecutionTime <= currentTime)
                 .ToListAsync();
-
-            // Get the current time of day
-            var currentTime = DateTime.Now.TimeOfDay;
-
-            // Filter jobs based on the execution time in memory
-            var jobsToRun = allJobs
-                .Where(job => job.DailyExecutionTime <= currentTime)
-                .ToList();
-
-            return jobsToRun;
         }
     }
 }

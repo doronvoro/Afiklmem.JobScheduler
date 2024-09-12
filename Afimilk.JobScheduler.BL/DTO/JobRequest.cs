@@ -1,5 +1,4 @@
 ﻿using Afimilk.JobScheduler.BL;
-using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 

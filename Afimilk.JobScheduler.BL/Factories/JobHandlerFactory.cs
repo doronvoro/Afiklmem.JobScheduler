@@ -1,32 +1,31 @@
-﻿using System.Collections.Concurrent;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 
 namespace Afimilk.JobScheduler.BL
 {
     public class JobHandlerFactory : IJobHandlerFactory
     {
-        private ConcurrentDictionary<string, Func<JobHandler>> _jobHandlerTypes;
+        private readonly ConcurrentDictionary<string, Func<IJobHandler>> _jobHandlerTypes;
 
-        public JobHandlerFactory()
+        public JobHandlerFactory(IServiceProvider serviceProvider)
         {
-            var dictionary = new Dictionary<string, Func<JobHandler>>
-             {
-                 { nameof(ReportingJob), () => new ReportingJob() },
-                 { nameof(MaintenanceJob), () => new MaintenanceJob() }
-             };
+            var handlers = serviceProvider.GetServices<IJobHandler>();
 
-            _jobHandlerTypes = new ConcurrentDictionary<string, Func<JobHandler>>(dictionary);
+            _jobHandlerTypes = new ConcurrentDictionary<string, Func<IJobHandler>>(
+                handlers.ToDictionary(
+                    handler => handler.GetType().Name,
+                    handler => (Func<IJobHandler>)(() => (IJobHandler)serviceProvider.GetRequiredService(handler.GetType()))
+                )
+            );
         }
 
-        public JobHandler GetHandler(string jobType)
+        public IJobHandler GetHandler(string jobType)
         {
             if (_jobHandlerTypes.TryGetValue(jobType, out var handler))
             {
                 return handler();
             }
-            else
-            {
-                throw new Exception($"Invalid job type {jobType}");
-            }
+            throw new ArgumentException($"Invalid job type {jobType}. Valid job types are: {string.Join(", ", _jobHandlerTypes.Keys)}");
         }
 
         public IEnumerable<string> GetJobTypeNames() => _jobHandlerTypes.Keys;

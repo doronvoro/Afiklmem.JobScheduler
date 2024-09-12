@@ -1,12 +1,12 @@
 ﻿namespace Afimilk.JobScheduler.BL
 {
-    public class MaintenanceJob : JobHandler
+    public class MaintenanceJob : IJobHandler
     {
-        public override async Task ExecuteAsync(Job job)
+        public async Task ExecuteAsync(Job job)
         {
             Console.WriteLine("MaintenanceJob start...");
 
-            await Task.Delay(TimeSpan.FromSeconds(30));// Simulate report generation
+            await Task.Delay(TimeSpan.FromSeconds(10));// Simulate Maintenance JOb
 
             Console.WriteLine("MaintenanceJob end...");
         }

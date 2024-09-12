@@ -1,5 +1,4 @@
-﻿using Afimilk.JobScheduler.BL;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,6 +14,13 @@ namespace Afimilk.JobScheduler.BL
                 options.UseSqlite("Data Source=jobs.db"));
 
             services.AddSingleton<IJobHandlerFactory, JobHandlerFactory>();
+            // Register job handlers as implementations of IJobHandler
+            services.AddTransient<ReportingJob>();
+            services.AddTransient<MaintenanceJob>();
+            services.AddTransient<IJobHandler>(provider => provider.GetService<ReportingJob>());
+            services.AddTransient<IJobHandler>(provider => provider.GetService<MaintenanceJob>());
+
+            services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
             // Register the JobRepository with Scoped lifetime
             services.AddScoped<IJobRepository, JobRepository>();

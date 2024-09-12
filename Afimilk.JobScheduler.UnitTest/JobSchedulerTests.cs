@@ -9,7 +9,6 @@ namespace Afimilk.JobScheduler.UnitTests
         private IServiceProvider _serviceProvider;
         private IServiceScope _scope;
         private BL.JobScheduler _jobScheduler;
-        //private Mock<IJobRepository> _jobRepositoryMock;
         private Mock<IJobHandlerFactory> _jobHandlerFactoryMock;
 
         private const int _defaultJobExecuteTime = 5 * 1000; //convert sec to milisecound
@@ -35,7 +34,7 @@ namespace Afimilk.JobScheduler.UnitTests
             var delayTime = TimeSpan.FromMilliseconds(_defaultJobExecuteTime);
 
             // Mock the job handler to return a Task.Delay with the specified delay time
-            var mockJobHandler = new Mock<JobHandler>();
+            var mockJobHandler = new Mock<IJobHandler>();
             mockJobHandler.Setup(jh => jh.ExecuteAsync(It.IsAny<Job>()))
                 .Returns(async () => await Task.Delay(delayTime));
 

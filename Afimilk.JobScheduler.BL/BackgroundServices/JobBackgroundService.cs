@@ -18,13 +18,13 @@ namespace Afimilk.JobScheduler.BL
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _timer = new Timer(DoWork!, null, TimeSpan.Zero, TimeSpan.FromSeconds(10)); // todo: get from configuration 
-            _logger.LogDebug("Timer Createad XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            _logger.LogDebug("Timer Createad ==================");
             return Task.CompletedTask;
         }
 
         private async void DoWork(object state)
         {
-            _logger.LogDebug("Timer execute ================================================================================");
+            _logger.LogDebug("Timer execute ==================");
             await _jobScheduler.ExecuteDueJobsAsync();
         }
 
@@ -34,5 +34,4 @@ namespace Afimilk.JobScheduler.BL
             return base.StopAsync(stoppingToken);
         }
     }
-
 }
