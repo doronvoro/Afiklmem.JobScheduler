@@ -36,9 +36,7 @@ Ensure that you have installed the following:
 1.  **Clone the Repository**:
 
  ```bash
-
-Copy code
-
+ 
 git clone https://github.com/doronvoro/Afiklmem.JobScheduler.git
 
 cd Afiklmem.JobScheduler
@@ -46,9 +44,7 @@ cd Afiklmem.JobScheduler
 2.  **Install Dependencies**:  
     Navigate to the solution folder and restore the project dependencies:
 
-bash
-
-Copy code
+ ```bash
 
 dotnet restore
 
